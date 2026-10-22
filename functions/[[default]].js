@@ -20,6 +20,11 @@ import manifestData from './_manifest.js';
 
 const IMAGE_ROOT = '/images';
 
+const STATIC_EXTENSIONS = new Set([
+  '.html', '.htm', '.js', '.mjs', '.css', '.json', '.webp', '.png', '.jpg',
+  '.jpeg', '.svg', '.ico', '.txt', '.xml', '.map', '.woff', '.woff2',
+]);
+
 const RANDOM_ROUTE = 'random';
 const PORTRAIT_SUFFIX = 'mp';
 
@@ -405,8 +410,26 @@ async function handleRequest(request, env) {
 // 双平台入口
 // ========================================
 
+// 这个函数是 catch-all，平台会把**所有**请求都交给它，包括 /images/** 静态图片。
+// 静态资源必须用 context.next() 交还给静态托管，否则图片会 404。
+function isStaticPath(pathname) {
+  if (pathname === '/' || pathname === '') return true;
+  if (pathname.startsWith(IMAGE_ROOT + '/')) return true;
+
+  const last = pathname.slice(pathname.lastIndexOf('/') + 1);
+  const dot = last.lastIndexOf('.');
+
+  return dot > 0 && STATIC_EXTENSIONS.has(last.slice(dot).toLowerCase());
+}
+
 // 标准 Pages Functions 入口（Cloudflare + EdgeOne）
 export async function onRequest(context) {
+  const { pathname } = new URL(context.request.url);
+
+  if (isStaticPath(pathname) && typeof context.next === 'function') {
+    return context.next();
+  }
+
   return handleRequest(context.request, context.env);
 }
 

@@ -20,8 +20,11 @@ images/
 - 图片文件名不限（`1.webp`、`pixpin_2025-09-01.webp` 都行），只认 `.webp` 后缀
 - 新增 / 删除图片后执行一次 `./scripts/gen-manifest.sh`，它会重新扫描并生成上面两个文件
 
-> 清单是在**构建时**打包进函数的，函数运行期不会再 `fetch` 自己的静态文件 —— Cloudflare Pages 上：
-> 函数发起的同源请求不一定能拿到静态资源，所以旧版运行时读取 `/images/manifest.json` 的方式会失败（返回 503「图片清单不可用」）。
+> 清单在**构建时**打包进函数（`functions/_manifest.js`），运行期不发任何额外请求。
+>
+> `functions/[[default]].js` 是 catch-all 路由，Cloudflare Pages 会把**所有**请求都交给它，包括 `/images/**`。
+> 所以函数里对静态路径（`/`、`/images/*`、带后缀的文件）必须调用 `context.next()` 交还静态托管，
+> 否则图片会 404（返回「接口不存在」）。本地 `scripts/dev.mjs` 也是这个执行顺序，可直接复现。
 
 ## 接口
 

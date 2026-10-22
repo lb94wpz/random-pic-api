@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-// 本地开发服务器：先找静态文件，找不到再交给 functions/[[default]].js
+// 本地开发服务器：行为对齐 Cloudflare Pages
+//   所有请求先交给 functions/[[default]].js
+//   函数内部对静态路径调用 context.next()，由这里把静态文件吐回去
 // 用法：node scripts/dev.mjs   或   PORT=3000 node scripts/dev.mjs
 import http from 'node:http';
 import fs from 'node:fs';
@@ -29,64 +31,71 @@ const MIME = {
 
 const { onRequest } = await import(pathToFileURL(FUNCTION_FILE).href);
 
-// 命中静态文件就返回 true
-function serveStatic(req, res, pathname) {
-  if (req.method !== 'GET' && req.method !== 'HEAD') return false;
+function notFound() {
+  return new Response('Not Found', {
+    status: 404,
+    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+  });
+}
+
+// 对应平台上的静态托管
+async function serveStatic(request, pathname) {
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    return new Response('Method Not Allowed', { status: 405 });
+  }
 
   let filePath;
   try {
     filePath = path.resolve(ROOT, '.' + decodeURIComponent(pathname));
   } catch {
-    return false;
+    return notFound();
   }
 
   // 阻止 ../ 穿越到项目目录之外
-  if (filePath !== ROOT && !filePath.startsWith(ROOT + path.sep)) return false;
+  if (filePath !== ROOT && !filePath.startsWith(ROOT + path.sep)) return notFound();
 
   let stat;
   try {
     stat = fs.statSync(filePath);
   } catch {
-    return false;
+    return notFound();
   }
 
   if (stat.isDirectory()) {
     if (!pathname.endsWith('/')) {
-      res.writeHead(301, { Location: pathname + '/' });
-      res.end();
-      return true;
+      return new Response(null, { status: 301, headers: { Location: pathname + '/' } });
     }
     filePath = path.join(filePath, 'index.html');
     try {
       stat = fs.statSync(filePath);
     } catch {
-      return false;
+      return notFound();
     }
   }
 
-  res.writeHead(200, {
-    'Content-Type': MIME[path.extname(filePath).toLowerCase()] || 'application/octet-stream',
-    'Content-Length': stat.size,
-    'Cache-Control': 'no-store',
+  const body = request.method === 'HEAD' ? null : await fs.promises.readFile(filePath);
+
+  return new Response(body, {
+    status: 200,
+    headers: {
+      'Content-Type': MIME[path.extname(filePath).toLowerCase()] || 'application/octet-stream',
+      'Content-Length': stat.size,
+      'Cache-Control': 'no-store',
+    },
   });
-
-  if (req.method === 'HEAD') {
-    res.end();
-    return true;
-  }
-
-  fs.createReadStream(filePath).pipe(res);
-  return true;
 }
 
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://' + (req.headers.host || HOST + ':' + PORT));
 
-  if (serveStatic(req, res, url.pathname)) return;
-
   try {
     const request = new Request(url, { method: req.method, headers: req.headers });
-    const response = await onRequest({ request, env: process.env });
+    const response = await onRequest({
+      request,
+      env: process.env,
+      next: () => serveStatic(request, url.pathname),
+    });
+
     const body = Buffer.from(await response.arrayBuffer());
 
     res.writeHead(response.status, Object.fromEntries(response.headers));
@@ -116,7 +125,7 @@ server.listen(PORT, HOST, () => {
   console.log('监听地址: ' + HOST + ':' + PORT);
   console.log('接口示例: /random  /random?return=json  /random?orientation=v  /<目录名>');
 
-  if (!fs.existsSync(path.join(ROOT, 'images', 'manifest.json'))) {
-    console.warn('警告: 缺少 images/manifest.json，先执行 ./scripts/gen-manifest.sh');
+  if (!fs.existsSync(path.join(ROOT, 'functions', '_manifest.js'))) {
+    console.warn('警告: 缺少 functions/_manifest.js，先执行 ./scripts/gen-manifest.sh');
   }
 });
