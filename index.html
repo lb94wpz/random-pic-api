@@ -276,47 +276,6 @@
       max-width: 720px;
     }
 
-    /* ---------- Stats ---------- */
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 16px;
-      margin-top: 22px;
-    }
-
-    .stat {
-      padding: 18px 20px;
-      border-radius: 16px;
-      border: 1px solid var(--panel-border);
-      background: var(--input-bg);
-      box-shadow: var(--card-shadow);
-      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-    }
-
-    .stat:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 25px var(--primary-glow);
-      border-color: var(--primary-glow);
-    }
-
-    .stat-num {
-      font-family: 'Outfit', sans-serif;
-      font-size: 26px;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      color: var(--text);
-      line-height: 1.1;
-    }
-
-    .stat-label {
-      margin-top: 4px;
-      font-size: 12px;
-      font-weight: 500;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: var(--text-faint);
-    }
-
     /* ---------- Preview ---------- */
     .preview-card {
       margin-bottom: 22px;
@@ -691,9 +650,6 @@
       .shell { padding: 16px 0 32px; }
       .hero { padding: 26px 22px; border-radius: 20px; }
       .section, .preview-card { padding: 20px; border-radius: 16px; }
-      .stats { grid-template-columns: 1fr 1fr; gap: 12px; }
-      .stats .stat:last-child { grid-column: 1 / -1; }
-      .stat-num { font-size: 22px; }
       .gh-link span { display: none; }
       .gh-link { padding: 0 12px; }
       th, td { padding: 10px 12px; font-size: 12.5px; }
@@ -745,21 +701,6 @@
         <p class="lead">
           简单、快速、免费的随机图片服务。每个目录一个接口，<code>/random</code> 会按访问设备自动挑选横屏或竖屏，支持 302 重定向与 JSON 两种返回方式。
         </p>
-
-        <div class="stats">
-          <div class="stat">
-            <div class="stat-num" id="totalCount">—</div>
-            <div class="stat-label">图片总数</div>
-          </div>
-          <div class="stat">
-            <div class="stat-num" id="hCount">—</div>
-            <div class="stat-label">横屏图片</div>
-          </div>
-          <div class="stat">
-            <div class="stat-num" id="vCount">—</div>
-            <div class="stat-label">竖屏图片</div>
-          </div>
-        </div>
       </section>
 
       <!-- Preview -->
@@ -946,43 +887,6 @@
     document.getElementById('urlJson').textContent = origin + '/random?return=json';
     document.getElementById('exampleUrl').textContent = origin + '/images/moe/0.webp';
     document.querySelectorAll('.origin').forEach((el) => { el.textContent = origin; });
-
-    // ---------- 统计 ----------
-    function setStatText(id, value) {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.textContent = typeof value === 'number' ? value.toLocaleString() : value;
-    }
-
-    function failStats() {
-      setStatText('totalCount', '?');
-      setStatText('hCount', '?');
-      setStatText('vCount', '?');
-    }
-
-    (function loadStats() {
-      const ctrl = new AbortController();
-      const to = setTimeout(() => ctrl.abort(), 5000);
-      fetch('/images/manifest.json', { cache: 'no-store', signal: ctrl.signal })
-        .then((res) => res.json())
-        .then((data) => {
-          clearTimeout(to);
-          let hTotal = 0;
-          let vTotal = 0;
-          for (const [name, files] of Object.entries(data)) {
-            const count = Array.isArray(files) ? files.length : 0;
-            if (name.endsWith('mp')) vTotal += count;
-            else hTotal += count;
-          }
-          setStatText('totalCount', hTotal + vTotal);
-          setStatText('hCount', hTotal);
-          setStatText('vCount', vTotal);
-        })
-        .catch(() => {
-          clearTimeout(to);
-          failStats();
-        });
-    })();
 
     // ---------- 复制 ----------
     function fallbackCopy(text) {

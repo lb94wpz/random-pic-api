@@ -9,7 +9,6 @@
 ```
 functions/_manifest.js   # 目录 -> 文件清单（脚本生成，构建时打进函数）
 images/
-├── manifest.json        # 同一份数据的 JSON（脚本生成，给页面统计用）
 ├── bd/                  # 横屏
 ├── lai/                 # 横屏
 ├── moe/                 # 横屏
@@ -18,7 +17,7 @@ images/
 
 - 目录名以 `mp` 结尾 = 竖屏，否则 = 横屏
 - 图片文件名不限（`1.webp`、`pixpin_2025-09-01.webp` 都行），只认 `.webp` 后缀
-- 新增 / 删除图片后执行一次 `./scripts/gen-manifest.sh`，它会重新扫描并生成上面两个文件
+- 新增 / 删除图片后执行一次 `./scripts/gen-manifest.sh`，重新生成 `functions/_manifest.js`
 
 > 清单在**构建时**打包进函数（`functions/_manifest.js`），运行期不发任何额外请求。
 >

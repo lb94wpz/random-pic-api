@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# 扫描 images/ 下的子目录，生成：
-#   functions/_manifest.js  接口用的目录 -> 文件清单（构建时打包进函数）
-#   images/manifest.json    页面统计用的同一份数据
+# 扫描 images/ 下的子目录，生成 functions/_manifest.js
+# 接口只认这一份清单：目录 -> 文件名列表（构建时打包进函数）
 # 新增 / 删除图片后执行一次：./scripts/gen-manifest.sh
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -38,8 +37,6 @@ $block"
   fi
 done
 
-printf '{\n%s\n}\n' "$body" > images/manifest.json
-
 {
   echo '// 由 scripts/gen-manifest.sh 自动生成，请勿手改'
   echo 'export default {'
@@ -47,7 +44,7 @@ printf '{\n%s\n}\n' "$body" > images/manifest.json
   echo '};'
 } > functions/_manifest.js
 
-echo "已生成 functions/_manifest.js 与 images/manifest.json"
+echo '已生成 functions/_manifest.js:'
 for dir in images/*/; do
   [ -d "$dir" ] || continue
   echo "  $(basename "$dir"): $(find "$dir" -maxdepth 1 -type f -name '*.webp' | wc -l | tr -d ' ') 张"
