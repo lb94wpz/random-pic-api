@@ -7,17 +7,21 @@
 ## 目录约定
 
 ```
+functions/_manifest.js   # 目录 -> 文件清单（脚本生成，构建时打进函数）
 images/
-├── manifest.json        # 目录清单（由脚本生成，勿手改）
-├── ys/       1.webp..N  # 横屏
-├── ysmp/     1.webp..N  # 竖屏（mp 后缀）
-├── miku/     1.webp..N  # 横屏
-└── mikump/   1.webp..N  # 竖屏（mp 后缀）
+├── manifest.json        # 同一份数据的 JSON（脚本生成，给页面统计用）
+├── bd/                  # 横屏
+├── lai/                 # 横屏
+├── moe/                 # 横屏
+└── moemp/               # 竖屏（mp 后缀）
 ```
 
 - 目录名以 `mp` 结尾 = 竖屏，否则 = 横屏
-- 目录内文件名必须是连续编号：`1.webp` ~ `N.webp`
-- 新增 / 删除图片后执行一次 `./scripts/gen-manifest.sh`，重新生成 `images/manifest.json`
+- 图片文件名不限（`1.webp`、`pixpin_2025-09-01.webp` 都行），只认 `.webp` 后缀
+- 新增 / 删除图片后执行一次 `./scripts/gen-manifest.sh`，它会重新扫描并生成上面两个文件
+
+> 清单是在**构建时**打包进函数的，函数运行期不会再 `fetch` 自己的静态文件 —— Cloudflare Pages 上：
+> 函数发起的同源请求不一定能拿到静态资源，所以旧版运行时读取 `/images/manifest.json` 的方式会失败（返回 503「图片清单不可用」）。
 
 ## 接口
 
@@ -44,8 +48,8 @@ images/
 
 | 请求 | 桌面（横屏） | 手机（竖屏） |
 |---|---|---|
-| `/ys` | `images/ys` | `images/ys` |
-| `/ysmp` | `images/ysmp` | `images/ysmp` |
+| `/moe` | `images/moe` | `images/moe` |
+| `/moemp` | `images/moemp` | `images/moemp` |
 | `/random` | 所有非 mp 目录 | 所有 mp 目录 |
 | `/random?orientation=h` | 所有非 mp 目录 | 所有非 mp 目录 |
 
@@ -54,7 +58,7 @@ images/
 ### 示例
 
 ```html
-<img src="https://你的域名/ys" alt="随机壁纸">
+<img src="https://你的域名/moe" alt="随机壁纸">
 ```
 
 ```js
@@ -71,7 +75,7 @@ const { url } = await fetch('https://你的域名/random?return=json').then((r) 
 | 403 | 域名未授权 |
 | 404 | 目录不存在 |
 | 405 | 方法不支持（仅 GET / HEAD / OPTIONS） |
-| 503 | `images/manifest.json` 不可用 |
+| 503 | 清单为空，先跑 `./scripts/gen-manifest.sh` |
 
 ## 环境变量
 
@@ -91,7 +95,7 @@ const { url } = await fetch('https://你的域名/random?return=json').then((r) 
 
 默认监听 `0.0.0.0`，容器 / 云开发环境里可通过端口转发访问；只在本机用时访问 `http://127.0.0.1:8787`。
 脚本会先找静态文件，找不到再交给 `functions/[[default]].js`，与 Pages 的行为一致。
-浏览器打开 `/` 即可看到文档页；接口可直接访问 `/random`、`/ys`、`/random?return=json`。
+浏览器打开 `/` 即可看到文档页；接口可直接访问 `/random`、`/moe`、`/random?return=json`。
 
 ## 部署
 

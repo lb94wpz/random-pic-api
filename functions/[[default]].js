@@ -11,14 +11,14 @@
 //   orientation=auto|h|v   仅 /random 有效，默认 auto（按 User-Agent 判断）
 //
 // 约定：
-//   images/<名字>/1.webp        横屏目录
-//   images/<名字>mp/1.webp      竖屏目录（mp = mobile portrait）
-//   目录内文件名连续编号 1.webp ~ N.webp，N 记录在 images/manifest.json
+//   images/<名字>/        横屏目录
+//   images/<名字>mp/      竖屏目录（mp = mobile portrait）
+//   目录下的 .webp 文件名不限，清单记录在 functions/_manifest.js（脚本生成）
 // ============================================================
 
+import manifestData from './_manifest.js';
+
 const IMAGE_ROOT = '/images';
-const MANIFEST_PATH = '/images/manifest.json';
-const IMAGE_EXT = '.webp';
 
 const RANDOM_ROUTE = 'random';
 const PORTRAIT_SUFFIX = 'mp';
@@ -29,9 +29,6 @@ const RETURN_JSON = 'json';
 const ORIENTATION_LANDSCAPE = 'h';
 const ORIENTATION_PORTRAIT = 'v';
 const ORIENTATION_AUTO = 'auto';
-
-const MANIFEST_TTL = 5 * 60 * 1000;
-const MANIFEST_ERROR_TTL = 30 * 1000;
 
 const MOBILE_KEYWORDS = [
   'mobile', 'android', 'iphone', 'ipad', 'ipod', 'blackberry',
@@ -53,10 +50,8 @@ const ORIENTATION_ALIASES = new Map([
 let ALLOWED_DOMAINS = [];
 let ALLOW_EMPTY_REQUEST = true;
 
-// -------- manifest 内存缓存 --------
-let folderManifest = null;
-let manifestExpiresAt = 0;
-let manifestLoading = null;
+// -------- 目录清单（构建时打包进函数，无需运行时 fetch） --------
+const FOLDER_COUNTS = normalizeManifest(manifestData);
 
 // ========================================
 // 配置
@@ -208,55 +203,19 @@ function textResponse(text, status, corsOrigin, extraHeaders = {}) {
 
 // ========================================
 // 目录清单
-// images/manifest.json 形如 { "ys": 23, "ysmp": 37 }
+// functions/_manifest.js 形如 { "moe": ["1.webp", ...], "moemp": [...] }
 // 由 scripts/gen-manifest.sh 扫描 images/ 生成
 // ========================================
 function normalizeManifest(data) {
   const folders = {};
 
-  for (const [name, count] of Object.entries(data || {})) {
-    const total = Number(count);
-    if (Number.isInteger(total) && total > 0) {
-      folders[name] = total;
+  for (const [name, files] of Object.entries(data || {})) {
+    if (Array.isArray(files) && files.length > 0) {
+      folders[name] = files;
     }
   }
 
   return folders;
-}
-
-async function loadManifest(request) {
-  const now = Date.now();
-
-  if (folderManifest && now < manifestExpiresAt) {
-    return folderManifest;
-  }
-
-  if (manifestLoading) {
-    return manifestLoading;
-  }
-
-  manifestLoading = (async () => {
-    try {
-      const resp = await fetch(new URL(MANIFEST_PATH, request.url).toString());
-
-      if (!resp.ok) {
-        throw new Error('manifest HTTP ' + resp.status);
-      }
-
-      folderManifest = normalizeManifest(await resp.json());
-      manifestExpiresAt = Date.now() + MANIFEST_TTL;
-    } catch (error) {
-      console.error('加载 manifest 失败:', error);
-      folderManifest = {};
-      manifestExpiresAt = Date.now() + MANIFEST_ERROR_TTL;
-    } finally {
-      manifestLoading = null;
-    }
-
-    return folderManifest;
-  })();
-
-  return manifestLoading;
 }
 
 // ========================================
@@ -328,22 +287,22 @@ function foldersForRandom(orientation, folders) {
 // ========================================
 // 随机取图
 // ========================================
-function randomInt(max) {
-  return Math.floor(Math.random() * max) + 1;
-}
-
 function pickImage(folders, names) {
-  const total = names.reduce((sum, name) => sum + folders[name], 0);
+  // 按文件数加权：目录里图越多，被选中的概率越大
+  const total = names.reduce((sum, name) => sum + folders[name].length, 0);
 
   if (total <= 0) return null;
 
   let index = Math.floor(Math.random() * total);
 
   for (const name of names) {
-    if (index < folders[name]) {
-      return { folder: name, file: randomInt(folders[name]) };
+    const files = folders[name];
+
+    if (index < files.length) {
+      return { folder: name, file: files[index] };
     }
-    index -= folders[name];
+
+    index -= files.length;
   }
 
   return null;
@@ -387,9 +346,9 @@ async function handleRequest(request, env) {
       return textResponse('return 只支持 302 或 json', 400, corsOrigin);
     }
 
-    const folders = await loadManifest(request);
+    const folders = FOLDER_COUNTS;
     if (Object.keys(folders).length === 0) {
-      return textResponse('图片清单不可用', 503, corsOrigin);
+      return textResponse('图片清单为空，请先执行 ./scripts/gen-manifest.sh 并重新部署', 503, corsOrigin);
     }
 
     // /random 按设备方向挑目录并支持 orientation 参数
@@ -418,7 +377,7 @@ async function handleRequest(request, env) {
       return textResponse('没有图片', 404, corsOrigin);
     }
 
-    const imagePath = IMAGE_ROOT + '/' + picked.folder + '/' + picked.file + IMAGE_EXT;
+    const imagePath = IMAGE_ROOT + '/' + picked.folder + '/' + encodeURIComponent(picked.file);
 
     if (returnType === RETURN_JSON) {
       return jsonResponse(

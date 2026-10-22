@@ -797,13 +797,13 @@
                 <td><span class="tag tag-redirect">302 重定向</span></td>
               </tr>
               <tr>
-                <td><code>/ys</code></td>
-                <td>images/ys 随机（固定该目录，不看设备方向）</td>
+                <td><code>/moe</code></td>
+                <td>images/moe 随机（固定该目录，不看设备方向）</td>
                 <td><span class="tag tag-redirect">302 重定向</span></td>
               </tr>
               <tr>
-                <td><code>/ysmp</code></td>
-                <td>images/ysmp 随机（固定该目录，不看设备方向）</td>
+                <td><code>/moemp</code></td>
+                <td>images/moemp 随机（固定该目录，不看设备方向）</td>
                 <td><span class="tag tag-redirect">302 重定向</span></td>
               </tr>
               <tr>
@@ -881,7 +881,7 @@
 
         <p class="hint" style="margin-top:0;">HTML</p>
         <div class="code-block">
-<pre>&lt;<span class="k">img</span> <span class="k">src</span>=<span class="s">"<span class="origin"></span>/ys"</span> <span class="k">alt</span>=<span class="s">"随机壁纸"</span>&gt;</pre>
+<pre>&lt;<span class="k">img</span> <span class="k">src</span>=<span class="s">"<span class="origin"></span>/moe"</span> <span class="k">alt</span>=<span class="s">"随机壁纸"</span>&gt;</pre>
         </div>
 
         <p class="hint">CSS 背景</p>
@@ -944,7 +944,7 @@
     // ---------- 填充 URL ----------
     document.getElementById('urlPic').textContent = origin + '/random';
     document.getElementById('urlJson').textContent = origin + '/random?return=json';
-    document.getElementById('exampleUrl').textContent = origin + '/images/ys/1.webp';
+    document.getElementById('exampleUrl').textContent = origin + '/images/moe/0.webp';
     document.querySelectorAll('.origin').forEach((el) => { el.textContent = origin; });
 
     // ---------- 统计 ----------
@@ -969,7 +969,8 @@
           clearTimeout(to);
           let hTotal = 0;
           let vTotal = 0;
-          for (const [name, count] of Object.entries(data)) {
+          for (const [name, files] of Object.entries(data)) {
+            const count = Array.isArray(files) ? files.length : 0;
             if (name.endsWith('mp')) vTotal += count;
             else hTotal += count;
           }
