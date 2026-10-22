@@ -47,5 +47,14 @@ done
 echo '已生成 functions/_manifest.js:'
 for dir in images/*/; do
   [ -d "$dir" ] || continue
-  echo "  $(basename "$dir"): $(find "$dir" -maxdepth 1 -type f -name '*.webp' | wc -l | tr -d ' ') 张"
+
+  name=$(basename "$dir")
+  total=$(find "$dir" -maxdepth 1 -type f -name '*.webp' | wc -l | tr -d ' ')
+
+  # 首页卡片按 images/folders.json 渲染，漏配的目录不会显示
+  if grep -q "\"$name\"" images/folders.json 2>/dev/null; then
+    echo "  $name: $total 张"
+  else
+    echo "  $name: $total 张  ← 未在 images/folders.json 中配置，首页不会显示"
+  fi
 done

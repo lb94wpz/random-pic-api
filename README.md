@@ -9,6 +9,7 @@
 ```
 functions/_manifest.js   # 目录 -> 文件清单（脚本生成，构建时打进函数）
 images/
+├── folders.json         # 目录含义配置（标题 / 描述），首页卡片按它渲染
 ├── bd/                  # 横屏
 ├── lai/                 # 横屏
 ├── moe/                 # 横屏
@@ -18,6 +19,23 @@ images/
 - 目录名以 `mp` 结尾 = 竖屏，否则 = 横屏
 - 图片文件名不限（`1.webp`、`pixpin_2025-09-01.webp` 都行），只认 `.webp` 后缀
 - 新增 / 删除图片后执行一次 `./scripts/gen-manifest.sh`，重新生成 `functions/_manifest.js`
+
+### 目录配置（首页卡片）
+
+`images/folders.json` 描述每个目录的含义，首页按它的**顺序**渲染卡片，一个目录一张：
+
+```json
+{
+  "bd": { "title": "白底", "desc": "白底图片，按设备自适应" },
+  "lai": { "title": "七濑胡桃", "desc": "七濑胡桃图片，按设备自适应" },
+  "moe": { "title": "萌系", "desc": "萌系横版图片" },
+  "moemp": { "title": "萌系竖屏", "desc": "萌系竖屏图片" }
+}
+```
+
+- 卡片主图直接取 `/random?type=<目录>`，每次进页面随机一张，**点击图片换一张**
+- 卡片里的 URL 指向 `/random?type=<目录>`，可点开
+- 新增目录但忘了加配置时，`./scripts/gen-manifest.sh` 会提示「未在 images/folders.json 中配置」
 
 > 清单在**构建时**打包进函数（`functions/_manifest.js`），运行期不发任何额外请求。
 >

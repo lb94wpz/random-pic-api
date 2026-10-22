@@ -28,13 +28,12 @@
   <style>
     :root, :root[data-theme="light"] {
       color-scheme: light;
-      --bg: #f8fafc;
+      --bg: #fbf6ee;
       --bg-gradient:
-        radial-gradient(circle at top left, rgba(15, 118, 110, 0.08), transparent 42%),
-        radial-gradient(circle at right 20%, rgba(2, 132, 199, 0.06), transparent 38%),
-        linear-gradient(180deg, #f8fafc 0%, #eef2f6 100%);
-      --panel: rgba(255, 255, 255, 0.85);
-      --panel-border: rgba(15, 23, 42, 0.06);
+        radial-gradient(circle at top left, rgba(15, 118, 110, 0.06), transparent 42%),
+        linear-gradient(180deg, #fdf9f3 0%, #f7f0e4 100%);
+      --panel: #ffffff;
+      --panel-border: rgba(15, 23, 42, 0.05);
       --text: #0f172a;
       --text-muted: #475569;
       --text-faint: #64748b;
@@ -44,7 +43,11 @@
       --primary-glow: rgba(15, 118, 110, 0.15);
       --accent: #0891b2;
       --shadow: 0 20px 50px rgba(15, 23, 42, 0.05);
-      --card-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
+      --card-shadow: 0 4px 16px rgba(120, 100, 70, 0.06);
+      --card-hover-shadow: 0 14px 30px rgba(120, 100, 70, 0.14);
+      --pill-bg: #f8f5ef;
+      --pill-border: #ece5d8;
+      --pill-text: #6b7280;
       --input-bg: #ffffff;
       --code-bg: #0f172a;
       --code-text: #e2e8f0;
@@ -80,6 +83,10 @@
       --accent: #38bdf8;
       --shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
       --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+      --card-hover-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+      --pill-bg: #1e293b;
+      --pill-border: #334155;
+      --pill-text: #94a3b8;
       --input-bg: #1e293b;
       --code-bg: #020617;
       --code-text: #e2e8f0;
@@ -276,114 +283,121 @@
       max-width: 720px;
     }
 
-    /* ---------- Preview ---------- */
-    .preview-card {
+    /* ---------- 目录卡片 ---------- */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 20px;
       margin-bottom: 22px;
-      padding: 24px;
-      border: 1px solid var(--panel-border);
-      border-radius: 20px;
+    }
+
+    .card {
+      display: flex;
+      flex-direction: column;
+      border-radius: 16px;
+      overflow: hidden;
       background: var(--panel);
       box-shadow: var(--card-shadow);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      transition: background 0.3s ease, border-color 0.3s ease;
-      text-align: center;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
-    .preview-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 14px 28px;
-      border-radius: 12px;
-      border: 0;
-      font-family: 'Outfit', sans-serif;
-      font-weight: 700;
-      font-size: 15px;
-      color: #ffffff;
-      background: linear-gradient(135deg, var(--primary), var(--accent));
-      box-shadow: 0 8px 24px var(--primary-glow);
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .preview-btn:hover {
+    .card:hover {
       transform: translateY(-2px);
-      box-shadow: 0 12px 30px var(--primary-glow);
-      filter: brightness(1.05);
+      box-shadow: var(--card-hover-shadow);
     }
 
-    .preview-btn:active { transform: scale(0.97); }
-
-    .preview-btn:disabled {
-      cursor: wait;
-      opacity: 0.85;
-    }
-
-    .preview-btn svg {
-      width: 18px;
-      height: 18px;
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-
-    .preview-btn.loading svg { animation: spin 1s linear infinite; }
-
-    @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-
-    .preview-hint {
-      margin-top: 14px;
-      font-size: 12.5px;
-      color: var(--text-faint);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .preview-hint kbd {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 22px;
-      height: 22px;
-      padding: 0 6px;
-      border-radius: 5px;
-      border: 1px solid var(--panel-border);
-      background: var(--input-bg);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-      color: var(--text-muted);
-      box-shadow: 0 1px 0 var(--panel-border);
-    }
-
-    .preview-container {
-      margin-top: 20px;
-      display: none;
+    .card-media {
       position: relative;
+      aspect-ratio: 2 / 1;
+      background: var(--input-bg);
+      overflow: hidden;
+      cursor: pointer;
     }
 
-    .preview-container.show { display: block; }
-
-    .preview-img {
-      max-width: 100%;
-      max-height: 460px;
-      border-radius: 14px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
-      border: 1px solid var(--panel-border);
+    .card-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
       display: block;
-      margin: 0 auto;
-      transition: opacity 0.3s ease;
+      transition: transform 0.35s ease, opacity 0.2s ease;
     }
 
-    .preview-img.loading { opacity: 0.3; }
+    .card-media:hover img { transform: scale(1.03); }
+
+    .card-media.loading img { opacity: 0.35; }
+
+    .card-badge {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1.4;
+      color: #ffffff;
+      background: rgba(38, 38, 38, 0.78);
+      pointer-events: none;
+    }
+
+    .card-body {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 18px 20px 20px;
+    }
+
+    .card-url {
+      align-self: flex-start;
+      max-width: 100%;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--pill-border);
+      background: var(--pill-bg);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.4;
+      color: var(--pill-text);
+      text-decoration: none;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      transition: color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .card-url:hover {
+      color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .card-desc {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--text-muted);
+    }
+
+    .card-hint {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.4;
+      color: var(--text-faint);
+    }
+
+    .cards-error {
+      grid-column: 1 / -1;
+      font-size: 13px;
+      color: var(--text-faint);
+    }
+
+    @media (max-width: 900px) {
+      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 620px) {
+      .cards { grid-template-columns: 1fr; gap: 14px; }
+      .card-media { aspect-ratio: 16 / 9; }
+    }
 
     /* ---------- Sections ---------- */
     .section {
@@ -632,7 +646,7 @@
 
     /* ---------- Fallback: 不支持 backdrop-filter ---------- */
     @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-      .hero, .preview-card, .section { background: var(--bg); }
+      .hero, .section { background: var(--bg); }
     }
 
     /* ---------- Reduced motion ---------- */
@@ -649,13 +663,12 @@
     @media (max-width: 720px) {
       .shell { padding: 16px 0 32px; }
       .hero { padding: 26px 22px; border-radius: 20px; }
-      .section, .preview-card { padding: 20px; border-radius: 16px; }
+      .section { padding: 20px; border-radius: 16px; }
       .gh-link span { display: none; }
       .gh-link { padding: 0 12px; }
       th, td { padding: 10px 12px; font-size: 12.5px; }
       h1 { font-size: 24px; }
       .eyebrow { font-size: 10px; padding: 5px 10px; }
-      .preview-img { max-height: 320px; }
       body { background-attachment: scroll; }
     }
   </style>
@@ -703,21 +716,8 @@
         </p>
       </section>
 
-      <!-- Preview -->
-      <section class="preview-card">
-        <button class="preview-btn" id="previewBtn" type="button">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
-          </svg>
-          <span>预览随机图片</span>
-        </button>
-        <p class="preview-hint">
-          点击按钮，或按 <kbd>←</kbd> <kbd>→</kbd> 切换上一张 / 下一张
-        </p>
-        <div class="preview-container" id="previewContainer">
-          <img class="preview-img" id="previewImg" alt="预览图片" />
-        </div>
-      </section>
+      <!-- 目录卡片：images/ 下每个子目录一张卡，含义配置在 images/folders.json -->
+      <section class="cards" id="cards" aria-label="图片目录"></section>
 
       <!-- API -->
       <section class="section">
@@ -927,196 +927,83 @@
       });
     });
 
-    // ---------- 预览（fetch+blob + 历史导航） ----------
-    const previewBtn = document.getElementById('previewBtn');
-    const previewContainer = document.getElementById('previewContainer');
-    const previewImg = document.getElementById('previewImg');
-    const preloadQueue = [];
-    const PREVIEW_TIMEOUT_MS = 8000;
-    const HISTORY_LIMIT = 20;
+    // ---------- 目录卡片 ----------
+    const cardsEl = document.getElementById('cards');
+    const FOLDERS_CONFIG_URL = '/images/folders.json';
 
-    const history = [];        // blobUrl 字符串数组，从旧到新
-    let historyIndex = -1;     // 当前显示的是 history 里的第几张
-    let isSwitching = false;
-
-    function resetPreviewLoading() {
-      previewImg.classList.remove('loading');
-      previewBtn.classList.remove('loading');
-      previewBtn.disabled = false;
-      isSwitching = false;
+    // 带随机参数，避免浏览器复用上一次的图
+    function randomImageUrl(dir) {
+      return origin + '/random?type=' + encodeURIComponent(dir)
+        + '&t=' + Date.now() + Math.random().toString(36).slice(2, 8);
     }
 
-    function makePreviewUrl() {
-      return origin + '/random?t=' + Date.now() + Math.random().toString(36).slice(2, 10);
-    }
+    function createCard(dir, meta) {
+      const title = meta.title || dir;
 
-    // 用 fetch 一次性取回图片二进制 → 避免「同一 URL 请求两次，服务端随机两次」
-    function fetchImageBlob(url, signal) {
-      return fetch(url, { cache: 'no-store', signal }).then((res) => {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.blob();
+      const card = document.createElement('article');
+      card.className = 'card';
+
+      // 图片区：点击换一张
+      const media = document.createElement('div');
+      media.className = 'card-media loading';
+      media.title = '点击换一张';
+
+      const img = document.createElement('img');
+      img.alt = title;
+      img.loading = 'lazy';
+      img.addEventListener('load', () => media.classList.remove('loading'));
+      img.addEventListener('error', () => media.classList.remove('loading'));
+      img.src = randomImageUrl(dir);
+
+      const badge = document.createElement('span');
+      badge.className = 'card-badge';
+      badge.textContent = title;
+
+      media.append(img, badge);
+      media.addEventListener('click', () => {
+        media.classList.add('loading');
+        img.src = randomImageUrl(dir);
       });
+
+      // 信息区
+      const apiUrl = origin + '/random?type=' + encodeURIComponent(dir);
+
+      const link = document.createElement('a');
+      link.className = 'card-url';
+      link.href = apiUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = apiUrl;
+
+      const desc = document.createElement('p');
+      desc.className = 'card-desc';
+      desc.textContent = meta.desc || '';
+
+      const hint = document.createElement('p');
+      hint.className = 'card-hint';
+      hint.textContent = '👆 点击图片可刷新预览';
+
+      const body = document.createElement('div');
+      body.className = 'card-body';
+      body.append(link, desc, hint);
+
+      card.append(media, body);
+      return card;
     }
 
-    function pushHistory(blobUrl) {
-      history.push(blobUrl);
-      if (history.length > HISTORY_LIMIT) {
-        const removed = history.shift();
-        // 只有当被淘汰的那张不是当前正在显示的，才释放内存
-        if (removed !== previewImg.dataset.blob) {
-          try { URL.revokeObjectURL(removed); } catch (_) {}
-        }
-      }
-    }
-
-    function showIndex(i) {
-      const blobUrl = history[i];
-      if (!blobUrl) return;
-      historyIndex = i;
-      previewImg.dataset.blob = blobUrl;
-      previewImg.alt = '预览图片';
-      previewImg.src = blobUrl;
-      previewImg.classList.remove('loading');
-    }
-
-    function enqueuePreload() {
-      const url = makePreviewUrl();
-      const task = { url, blobUrl: null, loaded: false, failed: false, promise: null };
-
-      task.promise = fetchImageBlob(url)
-        .then((blob) => {
-          if (task.failed) return;
-          task.blobUrl = URL.createObjectURL(blob);
-          task.loaded = true;
-        })
-        .catch(() => {
-          task.failed = true;
-          const i = preloadQueue.indexOf(task);
-          if (i >= 0) {
-            preloadQueue.splice(i, 1);
-            setTimeout(enqueuePreload, 800);
-          }
+    fetch(FOLDERS_CONFIG_URL, { cache: 'no-store' })
+      .then((res) => {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then((data) => {
+        Object.entries(data).forEach(([dir, meta]) => {
+          cardsEl.appendChild(createCard(dir, meta || {}));
         });
-
-      preloadQueue.push(task);
-    }
-
-    // 首次进入页面：先预取 1 张
-    enqueuePreload();
-
-    function scrollPreviewIntoView() {
-      setTimeout(() => {
-        previewContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 50);
-    }
-
-    // 从队列（或临时 fetch）取新的一张，加入历史并显示在末尾
-    function takeFromQueueAndShow() {
-      if (preloadQueue.length === 0) {
-        isSwitching = true;
-        previewBtn.classList.add('loading');
-        previewBtn.disabled = true;
-        previewImg.classList.add('loading');
-
-        const ctrl = new AbortController();
-        const timeoutId = setTimeout(() => ctrl.abort(), PREVIEW_TIMEOUT_MS);
-
-        fetchImageBlob(makePreviewUrl(), ctrl.signal)
-          .then((blob) => {
-            clearTimeout(timeoutId);
-            const blobUrl = URL.createObjectURL(blob);
-            pushHistory(blobUrl);
-            showIndex(history.length - 1);
-          })
-          .catch(() => {
-            clearTimeout(timeoutId);
-            previewImg.alt = '加载失败';
-          })
-          .finally(() => {
-            resetPreviewLoading();
-            enqueuePreload();
-          });
-        return;
-      }
-
-      const task = preloadQueue.shift();
-      enqueuePreload();   // 立即补一张，保持队列始终有下一张待命
-
-      isSwitching = true;
-      previewImg.classList.add('loading');
-
-      const finish = () => {
-        if (task.loaded && task.blobUrl) {
-          pushHistory(task.blobUrl);
-          showIndex(history.length - 1);
-        } else {
-          previewImg.alt = '加载失败';
-        }
-        resetPreviewLoading();
-      };
-
-      if (task.loaded && task.blobUrl) {
-        finish();
-      } else {
-        let settled = false;
-        const timeoutId = setTimeout(() => {
-          if (settled) return;
-          settled = true;
-          previewImg.alt = '加载超时';
-          resetPreviewLoading();
-        }, PREVIEW_TIMEOUT_MS);
-
-        task.promise.then(() => {
-          if (settled) return;
-          settled = true;
-          clearTimeout(timeoutId);
-          finish();
-        });
-      }
-    }
-
-    // 下一张：如果历史里还有下一张就直接切；否则从队列取新图
-    function goNext() {
-      if (isSwitching) return;
-      previewContainer.classList.add('show');
-
-      if (historyIndex >= 0 && historyIndex < history.length - 1) {
-        showIndex(historyIndex + 1);
-        scrollPreviewIntoView();
-        return;
-      }
-
-      takeFromQueueAndShow();
-      scrollPreviewIntoView();
-    }
-
-    // 上一张：只在历史范围内回退
-    function goPrev() {
-      if (isSwitching) return;
-      if (!previewContainer.classList.contains('show')) return;
-      if (historyIndex <= 0) return;
-      showIndex(historyIndex - 1);
-      scrollPreviewIntoView();
-    }
-
-    previewBtn.addEventListener('click', goNext);
-
-    // 键盘 ArrowLeft / ArrowRight
-    document.addEventListener('keydown', (e) => {
-      const t = e.target;
-      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
-
-      // 预览未显示时不拦截方向键，避免影响页面原生滚动
-      if (!previewContainer.classList.contains('show')) return;
-
-      if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        goNext();
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        goPrev();
-      }
-    });
+      })
+      .catch(() => {
+        cardsEl.innerHTML = '<p class="cards-error">目录列表加载失败</p>';
+      });
 
     // ---------- 主题切换 ----------
     const themeToggle = document.getElementById('themeToggle');
