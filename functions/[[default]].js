@@ -357,6 +357,17 @@ async function handleRequest(request, env) {
       return textResponse('图片清单为空，请先执行 ./scripts/gen-manifest.sh 并重新部署', 503, corsOrigin);
     }
 
+    // ?info：返回每个目录的图片数量，供首页卡片展示（如 111P）
+    if (url.searchParams.has('info')) {
+      const counts = {};
+
+      for (const [dir, files] of Object.entries(folders)) {
+        counts[dir] = files.length;
+      }
+
+      return jsonResponse(counts, 200, corsOrigin, { 'Cache-Control': 'no-store' });
+    }
+
     // type 指定目录：传几个就在几个目录里随机（不看设备方向）
     // 没传 type：按设备方向在所有横屏 / 竖屏目录里随机
     const typeNames = parseTypeParam(url.searchParams.get('type'));

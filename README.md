@@ -22,17 +22,18 @@ images/
 
 ### 目录配置（首页卡片）
 
-`images/folders.json` 描述每个目录的含义，首页按它的**顺序**渲染卡片，一个目录一张：
+`images/folders.json`：key 是目录名，value 是卡片上的描述。首页按 key 的**顺序**渲染卡片，一个目录一张：
 
 ```json
 {
-  "bd": { "title": "白底", "desc": "白底图片，按设备自适应" },
-  "lai": { "title": "七濑胡桃", "desc": "七濑胡桃图片，按设备自适应" },
-  "moe": { "title": "萌系", "desc": "萌系横版图片" },
-  "moemp": { "title": "萌系竖屏", "desc": "萌系竖屏图片" }
+  "bd": "白底图片，按设备自适应",
+  "lai": "七濑胡桃图片，按设备自适应",
+  "moe": "萌系横版图片",
+  "moemp": "萌系竖屏图片"
 }
 ```
 
+- 角标显示该目录的图片数量（如 `147P`），数据来自 `/random?info`
 - 卡片主图直接取 `/random?type=<目录>`，每次进页面随机一张，**点击图片换一张**
 - 卡片里的 URL 指向 `/random?type=<目录>`，可点开
 - 新增目录但忘了加配置时，`./scripts/gen-manifest.sh` 会提示「未在 images/folders.json 中配置」
@@ -53,6 +54,7 @@ images/
 | `GET /random?type=bd` | 只在 `images/bd` 里随机 | 302 |
 | `GET /random?type=bd,lai` | 在 `bd` + `lai` 两个目录里随机（逗号分隔，可传多个） | 302 |
 | `GET /random?return=json` | 同上，返回 JSON | JSON |
+| `GET /random?info` | 返回每个目录的图片数量，如 `{"bd":147,...}` | JSON |
 | `OPTIONS /random` | CORS 预检 | 204 |
 
 ### 参数

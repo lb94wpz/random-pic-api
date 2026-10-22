@@ -708,6 +708,11 @@
                 <td><span class="tag tag-redirect">302 重定向</span></td>
               </tr>
               <tr>
+                <td><code>/random?info</code></td>
+                <td>各目录图片数量（首页角标用），如 147P</td>
+                <td><span class="tag tag-json">JSON</span></td>
+              </tr>
+              <tr>
                 <td><code>/random?return=json</code></td>
                 <td>JSON 返回，只含一条图片 URL</td>
                 <td><span class="tag tag-json">JSON</span></td>
@@ -872,8 +877,8 @@
         + '&t=' + Date.now() + Math.random().toString(36).slice(2, 8);
     }
 
-    function createCard(dir, meta) {
-      const title = meta.title || dir;
+    function createCard(dir, desc, count) {
+      const text = typeof desc === 'string' ? desc : '';
 
       const card = document.createElement('article');
       card.className = 'card';
@@ -884,7 +889,7 @@
       media.title = '点击换一张';
 
       const img = document.createElement('img');
-      img.alt = title;
+      img.alt = text || dir;
       img.loading = 'lazy';
       img.addEventListener('load', () => media.classList.remove('loading'));
       img.addEventListener('error', () => media.classList.remove('loading'));
@@ -892,7 +897,7 @@
 
       const badge = document.createElement('span');
       badge.className = 'card-badge';
-      badge.textContent = title;
+      badge.textContent = typeof count === 'number' ? count + 'P' : dir;
 
       media.append(img, badge);
       media.addEventListener('click', () => {
@@ -910,9 +915,9 @@
       link.rel = 'noopener noreferrer';
       link.textContent = apiUrl;
 
-      const desc = document.createElement('p');
-      desc.className = 'card-desc';
-      desc.textContent = meta.desc || '';
+      const descEl = document.createElement('p');
+      descEl.className = 'card-desc';
+      descEl.textContent = text;
 
       const hint = document.createElement('p');
       hint.className = 'card-hint';
@@ -920,20 +925,25 @@
 
       const body = document.createElement('div');
       body.className = 'card-body';
-      body.append(link, desc, hint);
+      body.append(link, descEl, hint);
 
       card.append(media, body);
       return card;
     }
 
-    fetch(FOLDERS_CONFIG_URL, { cache: 'no-store' })
-      .then((res) => {
+    Promise.all([
+      fetch(FOLDERS_CONFIG_URL, { cache: 'no-store' }).then((res) => {
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.json();
-      })
-      .then((data) => {
-        Object.entries(data).forEach(([dir, meta]) => {
-          cardsEl.appendChild(createCard(dir, meta || {}));
+      }),
+      // 各目录图片数量，失败时降级成只显示标题
+      fetch(origin + '/random?info', { cache: 'no-store' })
+        .then((res) => (res.ok ? res.json() : {}))
+        .catch(() => ({})),
+    ])
+      .then(([data, counts]) => {
+        Object.entries(data).forEach(([dir, desc]) => {
+          cardsEl.appendChild(createCard(dir, desc, counts[dir]));
         });
       })
       .catch(() => {
