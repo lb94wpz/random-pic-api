@@ -123,7 +123,7 @@ server.on('error', (error) => {
 server.listen(PORT, HOST, () => {
   console.log('随机图片 API 本地预览: http://localhost:' + PORT);
   console.log('监听地址: ' + HOST + ':' + PORT);
-  console.log('接口示例: /random  /random?return=json  /random?orientation=v  /<目录名>');
+  console.log('接口示例: /random  /random?type=moe  /random?type=bd,lai  /random?return=json');
 
   if (!fs.existsSync(path.join(ROOT, 'functions', '_manifest.js'))) {
     console.warn('警告: 缺少 functions/_manifest.js，先执行 ./scripts/gen-manifest.sh');

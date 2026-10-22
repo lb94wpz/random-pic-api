@@ -3,12 +3,13 @@
 // 兼容 Cloudflare Pages / EdgeOne Pages
 //
 // 路由：
-//   /random        所有目录随机，按设备方向在横屏 / 竖屏目录中挑
-//   /<目录名>      只在指定目录内随机，如 /ys、/ysmp（不看设备方向）
+//   /random               所有目录随机，按设备方向在横屏 / 竖屏目录中挑
 //
 // 参数：
+//   type=目录[,目录]      指定目录，可多选，如 ?type=bd、?type=bd,lai
+//                         不传 = 全部目录（按设备方向筛选）
 //   return=302|json        返回方式，默认 302 重定向
-//   orientation=auto|h|v   仅 /random 有效，默认 auto（按 User-Agent 判断）
+//   orientation=auto|h|v   仅在没传 type 时有效，默认 auto（按 User-Agent 判断）
 //
 // 约定：
 //   images/<名字>/        横屏目录
@@ -25,7 +26,7 @@ const STATIC_EXTENSIONS = new Set([
   '.jpeg', '.svg', '.ico', '.txt', '.xml', '.map', '.woff', '.woff2',
 ]);
 
-const RANDOM_ROUTE = 'random';
+const API_PATH = '/random';
 const PORTRAIT_SUFFIX = 'mp';
 
 const RETURN_REDIRECT = '302';
@@ -226,16 +227,16 @@ function normalizeManifest(data) {
 // ========================================
 // 参数解析
 // ========================================
-function parseRouteName(url) {
-  const segments = url.pathname.split('/').filter(Boolean);
+// ?type=bd,lai -> ['bd', 'lai']；未传 -> null；传了空值 -> []
+function parseTypeParam(raw) {
+  if (raw === null) return null;
 
-  if (segments.length !== 1) return null;
+  const names = raw
+    .split(',')
+    .map((name) => name.trim())
+    .filter(Boolean);
 
-  try {
-    return decodeURIComponent(segments[0]);
-  } catch {
-    return null;
-  }
+  return [...new Set(names)];
 }
 
 function parseReturnType(raw) {
@@ -341,8 +342,8 @@ async function handleRequest(request, env) {
 
     corsOrigin = resolveCorsOrigin(request);
 
-    const name = parseRouteName(url);
-    if (name === null) {
+    // 只有 /random 是接口，其他路径（/、/images/... 等静态资源除外）都是 404
+    if (url.pathname !== API_PATH) {
       return textResponse('接口不存在', 404, corsOrigin);
     }
 
@@ -356,11 +357,25 @@ async function handleRequest(request, env) {
       return textResponse('图片清单为空，请先执行 ./scripts/gen-manifest.sh 并重新部署', 503, corsOrigin);
     }
 
-    // /random 按设备方向挑目录并支持 orientation 参数
-    // /<目录名> 只在该目录里随机，不看设备方向
+    // type 指定目录：传几个就在几个目录里随机（不看设备方向）
+    // 没传 type：按设备方向在所有横屏 / 竖屏目录里随机
+    const typeNames = parseTypeParam(url.searchParams.get('type'));
+
+    if (typeNames !== null && typeNames.length === 0) {
+      return textResponse('type 不能为空，格式如 ?type=bd 或 ?type=bd,lai', 400, corsOrigin);
+    }
+
     let targetFolders;
 
-    if (name === RANDOM_ROUTE) {
+    if (typeNames !== null) {
+      const unknown = typeNames.filter((name) => folders[name] === undefined);
+
+      if (unknown.length > 0) {
+        return textResponse('目录不存在: ' + unknown.join(', '), 404, corsOrigin);
+      }
+
+      targetFolders = typeNames;
+    } else {
       const orientationParam = parseOrientation(url.searchParams.get('orientation'));
       if (orientationParam === null) {
         return textResponse('orientation 只支持 auto / h / v', 400, corsOrigin);
@@ -370,11 +385,6 @@ async function handleRequest(request, env) {
         orientationParam === ORIENTATION_AUTO ? detectOrientation(request) : orientationParam;
 
       targetFolders = foldersForRandom(orientation, folders);
-    } else {
-      if (folders[name] === undefined) {
-        return textResponse('目录不存在', 404, corsOrigin);
-      }
-      targetFolders = [name];
     }
 
     const picked = pickImage(folders, targetFolders);
@@ -413,8 +423,10 @@ async function handleRequest(request, env) {
 // 这个函数是 catch-all，平台会把**所有**请求都交给它，包括 /images/** 静态图片。
 // 静态资源必须用 context.next() 交还给静态托管，否则图片会 404。
 function isStaticPath(pathname) {
+  // 首页、目录页和带后缀的文件交给静态托管；/random 不带后缀，会走接口
   if (pathname === '/' || pathname === '') return true;
   if (pathname.startsWith(IMAGE_ROOT + '/')) return true;
+  if (pathname.endsWith('/')) return true;
 
   const last = pathname.slice(pathname.lastIndexOf('/') + 1);
   const dot = last.lastIndexOf('.');

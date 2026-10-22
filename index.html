@@ -4,11 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>随机图片 API</title>
-  <meta name="description" content="简单、快速、免费的随机图片 API。指定目录随机取图，/random 还会按访问设备自动选横屏或竖屏，支持 302 跳转与 JSON 返回。" />
+  <meta name="description" content="简单、快速、免费的随机图片 API。用 ?type= 指定一个或多个目录，不传时按访问设备自动选横屏或竖屏，支持 302 跳转与 JSON 返回。" />
   <meta name="theme-color" content="#0f766e" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0b0f19" media="(prefers-color-scheme: dark)" />
   <meta property="og:title" content="随机图片 API" />
-  <meta property="og:description" content="指定目录随机取图，/random 按访问设备自动匹配横屏 / 竖屏。" />
+  <meta property="og:description" content="用 ?type= 指定目录，不传时按访问设备自动匹配横屏 / 竖屏。" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg width='600' height='600' viewBox='0 0 24 24' aria-hidden='true' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='logoGrad' x1='0' y1='0' x2='24' y2='24' gradientUnits='userSpaceOnUse'%3E%3Cstop offset='0%25' stop-color='%2314b8a6'/%3E%3Cstop offset='100%25' stop-color='%230891b2'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath fill='url(%23logoGrad)' d='M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z'/%3E%3C/svg%3E" />
@@ -699,7 +699,7 @@
       <section class="hero">
         <h1>随机图片 API</h1>
         <p class="lead">
-          简单、快速、免费的随机图片服务。每个目录一个接口，<code>/random</code> 会按访问设备自动挑选横屏或竖屏，支持 302 重定向与 JSON 两种返回方式。
+          简单、快速、免费的随机图片服务。接口 <code>/random</code> 用 <code>?type=</code> 指定目录（可多选），不传则按访问设备自动挑选横屏或竖屏，支持 302 重定向与 JSON 两种返回方式。
         </p>
       </section>
 
@@ -738,18 +738,13 @@
                 <td><span class="tag tag-redirect">302 重定向</span></td>
               </tr>
               <tr>
-                <td><code>/moe</code></td>
-                <td>images/moe 随机（固定该目录，不看设备方向）</td>
+                <td><code>/random?type=moe</code></td>
+                <td>只在 images/moe 里随机</td>
                 <td><span class="tag tag-redirect">302 重定向</span></td>
               </tr>
               <tr>
-                <td><code>/moemp</code></td>
-                <td>images/moemp 随机（固定该目录，不看设备方向）</td>
-                <td><span class="tag tag-redirect">302 重定向</span></td>
-              </tr>
-              <tr>
-                <td><code>/任意目录名</code></td>
-                <td>images 下的每个子目录都是一个接口</td>
+                <td><code>/random?type=moe,moemp</code></td>
+                <td>多个目录合并随机，逗号分隔</td>
                 <td><span class="tag tag-redirect">302 重定向</span></td>
               </tr>
               <tr>
@@ -759,7 +754,7 @@
               </tr>
               <tr>
                 <td><code>/random?orientation=v</code></td>
-                <td>仅 /random 有效：强制竖屏（h 横屏 / auto 跟随设备，默认 auto）</td>
+                <td>仅不传 type 时有效：强制竖屏（h 横屏 / auto 跟随设备，默认 auto）</td>
                 <td><span class="tag tag-redirect">302 重定向</span></td>
               </tr>
             </tbody>
@@ -822,7 +817,7 @@
 
         <p class="hint" style="margin-top:0;">HTML</p>
         <div class="code-block">
-<pre>&lt;<span class="k">img</span> <span class="k">src</span>=<span class="s">"<span class="origin"></span>/moe"</span> <span class="k">alt</span>=<span class="s">"随机壁纸"</span>&gt;</pre>
+<pre>&lt;<span class="k">img</span> <span class="k">src</span>=<span class="s">"<span class="origin"></span>/random?type=moe"</span> <span class="k">alt</span>=<span class="s">"随机壁纸"</span>&gt;</pre>
         </div>
 
         <p class="hint">CSS 背景</p>
