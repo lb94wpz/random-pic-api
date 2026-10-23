@@ -317,7 +317,7 @@ function pickImage(folders, names) {
 // ========================================
 // 请求处理
 // ========================================
-async function handleRequest(request, env) {
+export async function handleRequest(request, env) {
   initConfig(env);
 
   let corsOrigin = null;
