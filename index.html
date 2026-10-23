@@ -348,7 +348,8 @@
       cursor: pointer;
     }
 
-    .card-media img {
+    .card-media img,
+    .card-media video {
       width: 100%;
       height: 100%;
       object-fit: cover;
@@ -356,9 +357,11 @@
       transition: transform 0.35s ease, opacity 0.2s ease;
     }
 
-    .card-media:hover img { transform: scale(1.03); }
+    .card-media:hover img,
+    .card-media:hover video { transform: scale(1.03); }
 
-    .card-media.loading img { opacity: 0.35; }
+    .card-media.loading img,
+    .card-media.loading video { opacity: 0.35; }
 
     .card-badge {
       position: absolute;
@@ -919,6 +922,38 @@
         + '&t=' + Date.now() + Math.random().toString(36).slice(2, 8);
     }
 
+    // 向接口要一条具体地址（直链），便于按后缀判断是图片还是视频
+    function randomMediaUrl(dir) {
+      const url = origin + '/random?type=' + encodeURIComponent(dir) + '&return=json'
+        + '&t=' + Date.now() + Math.random().toString(36).slice(2, 8);
+
+      return fetch(url, { cache: 'no-store' })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => (data && data.url) || null)
+        .catch(() => null);
+    }
+
+    const VIDEO_EXT = /\.(mp4|webm|ogg)$/i;
+
+    function createImage(url, alt) {
+      const img = document.createElement('img');
+      img.alt = alt;
+      img.loading = 'lazy';
+      img.src = url;
+      return img;
+    }
+
+    function createVideo(url) {
+      const video = document.createElement('video');
+      video.src = url;
+      video.autoplay = true;
+      video.muted = true;
+      video.loop = true;
+      video.playsInline = true;
+      video.preload = 'metadata';
+      return video;
+    }
+
     // ---------- Hero 背景：images/fj 随机一张 ----------
     const heroBg = document.getElementById('heroBg');
     const revealHeroBg = () => heroBg.classList.add('loaded');
@@ -932,27 +967,39 @@
       const card = document.createElement('article');
       card.className = 'card';
 
-      // 图片区：点击换一张
+      // 预览区：点击换一个
       const media = document.createElement('div');
       media.className = 'card-media loading';
-      media.title = '点击换一张';
-
-      const img = document.createElement('img');
-      img.alt = text || dir;
-      img.loading = 'lazy';
-      img.addEventListener('load', () => media.classList.remove('loading'));
-      img.addEventListener('error', () => media.classList.remove('loading'));
-      img.src = randomImageUrl(dir);
+      media.title = '点击换一个';
 
       const badge = document.createElement('span');
       badge.className = 'card-badge';
       badge.textContent = typeof count === 'number' ? count + 'P' : dir;
 
-      media.append(img, badge);
-      media.addEventListener('click', () => {
+      media.append(badge);
+
+      let current = null;
+
+      // 换一张：先问接口要一条具体地址，再按后缀决定用 img 还是 video
+      async function refreshMedia() {
         media.classList.add('loading');
-        img.src = randomImageUrl(dir);
-      });
+        const url = (await randomMediaUrl(dir)) || randomImageUrl(dir);
+
+        const isVideo = VIDEO_EXT.test(url.split('?')[0]);
+        const el = isVideo ? createVideo(url) : createImage(url, text || dir);
+
+        if (typeof count === 'number') badge.textContent = count + (isVideo ? 'V' : 'P');
+
+        el.addEventListener(isVideo ? 'loadeddata' : 'load', () => media.classList.remove('loading'), { once: true });
+        el.addEventListener('error', () => media.classList.remove('loading'), { once: true });
+
+        if (current) current.remove();
+        current = el;
+        media.append(el);
+      }
+
+      media.addEventListener('click', refreshMedia);
+      refreshMedia();
 
       // 信息区
       const apiUrl = origin + '/random?type=' + encodeURIComponent(dir);
@@ -970,7 +1017,7 @@
 
       const hint = document.createElement('p');
       hint.className = 'card-hint';
-      hint.textContent = '👆 点击图片可刷新预览';
+      hint.textContent = '👆 点击预览可刷新';
 
       const body = document.createElement('div');
       body.className = 'card-body';

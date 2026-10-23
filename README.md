@@ -17,7 +17,8 @@ images/
 ```
 
 - 目录名以 `mp` 结尾 = 竖屏，否则 = 横屏
-- 图片文件名不限（`1.webp`、`pixpin_2025-09-01.webp` 都行），只认 `.webp` 后缀
+- 文件名不限（`1.webp`、`pixpin_2025-09-01.webp` 都行），只认 `.webp` 与 `.mp4` 后缀
+- 目录里是 `.mp4` 时（如 `dt`），首页卡片用 `<video>` 静音循环播放
 - 新增 / 删除图片后执行一次 `./scripts/gen-manifest.sh`，重新生成 `functions/_manifest.js`
 
 ### 目录配置（首页卡片）
@@ -33,8 +34,8 @@ images/
 }
 ```
 
-- 角标显示该目录的图片数量（如 `147P`），数据来自 `/random?info`
-- 卡片主图直接取 `/random?type=<目录>`，每次进页面随机一张，**点击图片换一张**
+- 角标显示该目录的资源数量（如 `147P`），数据来自 `/random?info`；目录里是视频时显示 `10V`
+- 卡片先请求 `/random?type=<目录>&return=json` 拿到直链，按后缀决定渲染 `<img>` 还是 `<video>`，**点击预览换一个**
 - 卡片里的 URL 指向 `/random?type=<目录>`，可点开
 - 新增目录但忘了加配置时，`./scripts/gen-manifest.sh` 会提示「未在 images/folders.json 中配置」
 

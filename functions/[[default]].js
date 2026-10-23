@@ -23,7 +23,7 @@ const IMAGE_ROOT = '/images';
 
 const STATIC_EXTENSIONS = new Set([
   '.html', '.htm', '.js', '.mjs', '.css', '.json', '.webp', '.png', '.jpg',
-  '.jpeg', '.svg', '.ico', '.txt', '.xml', '.map', '.woff', '.woff2',
+  '.jpeg', '.svg', '.ico', '.txt', '.xml', '.map', '.woff', '.woff2', '.mp4',
 ]);
 
 const API_PATH = '/random';

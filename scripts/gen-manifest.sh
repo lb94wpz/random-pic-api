@@ -10,7 +10,7 @@ for dir in images/*/; do
   [ -d "$dir" ] || continue
 
   name=$(basename "$dir")
-  mapfile -t files < <(find "$dir" -maxdepth 1 -type f -name '*.webp' -printf '%f\n' | sort)
+  mapfile -t files < <(find "$dir" -maxdepth 1 -type f \( -name '*.webp' -o -name '*.mp4' \) -printf '%f\n' | sort)
 
   total=${#files[@]}
   [ "$total" -gt 0 ] || continue
@@ -49,7 +49,7 @@ for dir in images/*/; do
   [ -d "$dir" ] || continue
 
   name=$(basename "$dir")
-  total=$(find "$dir" -maxdepth 1 -type f -name '*.webp' | wc -l | tr -d ' ')
+  total=$(find "$dir" -maxdepth 1 -type f \( -name '*.webp' -o -name '*.mp4' \) | wc -l | tr -d ' ')
 
   # 首页卡片按 images/folders.json 渲染，漏配的目录不会显示
   if grep -q "\"$name\"" images/folders.json 2>/dev/null; then
